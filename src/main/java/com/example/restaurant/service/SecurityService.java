@@ -1,5 +1,6 @@
 package com.example.restaurant.service;
 
+import com.example.restaurant.model.CurrentPrincipal;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -80,8 +81,8 @@ public class SecurityService {
         return extractExpiration(token).before(new Date());
     }
 
-    public Boolean validateToken(String token, UserDetails userDetails) {
+    public Boolean validateToken(String token, CurrentPrincipal currentPrincipal) {
         final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+        return (username.equals(currentPrincipal.getEmail()) && !isTokenExpired(token));
     }
 }

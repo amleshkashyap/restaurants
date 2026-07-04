@@ -1,5 +1,6 @@
 package com.example.restaurant.service;
 
+import com.example.restaurant.config.OrderStateMachineConfig;
 import com.example.restaurant.controller.model.OrderMealModel;
 import com.example.restaurant.controller.model.OrderModel;
 import com.example.restaurant.model.*;
@@ -11,9 +12,13 @@ import jakarta.persistence.EntityGraph;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Subgraph;
 import jakarta.transaction.Transactional;
+import org.springframework.statemachine.StateMachine;
+import org.springframework.statemachine.config.StateMachineFactory;
+import org.springframework.statemachine.transition.Transition;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
@@ -22,15 +27,18 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final OrderStatusHistoryRepository orderStatusHistoryRepository;
     private final EntityManager entityManager;
+    private final StateMachineFactory<OrderStatusValues, OrderEvents> stateMachineFactory;
 
     public OrderService(
             OrderRepository orderRepository,
             OrderStatusHistoryRepository orderStatusHistoryRepository,
-            EntityManager entityManager
+            EntityManager entityManager,
+            StateMachineFactory<OrderStatusValues, OrderEvents> stateMachineFactory
     ) {
         this.orderRepository = orderRepository;
         this.orderStatusHistoryRepository = orderStatusHistoryRepository;
         this.entityManager = entityManager;
+        this.stateMachineFactory = stateMachineFactory;
     }
 
     @Transactional
@@ -97,4 +105,13 @@ public class OrderService {
         hints.put("jakarta.persistence.loadgraph", graph);
         return this.entityManager.find(Order.class, id, hints);
     }
+
+    public boolean isValidTransition(OrderStatusValues lastStatus, OrderStatusValues curStatus) {
+        Collection<Transition<OrderStatusValues, OrderEvents>> transitions = this.stateMachineFactory.getStateMachine().getTransitions();
+        return transitions.stream().anyMatch(transition ->
+                transition.getSource().getId().equals(lastStatus)
+                && transition.getTarget().getId().equals(curStatus)
+        );
+    }
+
 }

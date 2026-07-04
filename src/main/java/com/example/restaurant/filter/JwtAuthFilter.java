@@ -1,5 +1,6 @@
 package com.example.restaurant.filter;
 
+import com.example.restaurant.model.CurrentPrincipal;
 import com.example.restaurant.service.CustomUserDetailsService;
 import com.example.restaurant.service.SecurityService;
 import jakarta.servlet.FilterChain;
@@ -36,12 +37,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
-            if (this.securityService.validateToken(token, userDetails)) {
+            CurrentPrincipal currentPrincipal = this.userDetailsService.loadUserByUsername(username);
+            if (this.securityService.validateToken(token, currentPrincipal)) {
                 UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
+                        currentPrincipal,
                         null,
-                        userDetails.getAuthorities());
+                        currentPrincipal.getAuthorities());
                 authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authenticationToken);
             }

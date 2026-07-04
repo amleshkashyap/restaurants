@@ -4,12 +4,15 @@ import com.example.restaurant.controller.dto.RestaurantDTO;
 import com.example.restaurant.controller.dto.RestaurantDetailsDTO;
 import com.example.restaurant.controller.model.RestaurantModel;
 import com.example.restaurant.filter.ResourceGuard;
+import com.example.restaurant.model.CurrentPrincipal;
 import com.example.restaurant.model.Restaurant;
 import com.example.restaurant.model.User;
 import com.example.restaurant.repository.RestaurantRepository;
+import com.example.restaurant.repository.UserRepository;
 import com.example.restaurant.service.RestaurantService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -23,11 +26,18 @@ public class RestaurantController {
     private final RestaurantService restaurantService;
     private final RestaurantRepository restaurantRepository;
     private final ResourceGuard resourceGuard;
+    private final UserRepository userRepository;
 
-    public RestaurantController(RestaurantService restaurantService, RestaurantRepository restaurantRepository, ResourceGuard resourceGuard) {
+    public RestaurantController(
+            RestaurantService restaurantService,
+            RestaurantRepository restaurantRepository,
+            ResourceGuard resourceGuard,
+            UserRepository userRepository
+    ) {
         this.restaurantService = restaurantService;
         this.restaurantRepository = restaurantRepository;
         this.resourceGuard = resourceGuard;
+        this.userRepository = userRepository;
     }
 
     @GetMapping
@@ -46,19 +56,19 @@ public class RestaurantController {
     }
 
     @PostMapping
-    public ResponseEntity<RestaurantDetailsDTO> createRestaurant(@ModelAttribute("currentUser") User user, @RequestBody RestaurantModel restaurantModel) {
-        return ResponseEntity.ok(new RestaurantDetailsDTO(this.restaurantService.createRestaurant(restaurantModel, user)));
+    public ResponseEntity<RestaurantDetailsDTO> createRestaurant(@AuthenticationPrincipal CurrentPrincipal principal, @RequestBody RestaurantModel restaurantModel) {
+        return ResponseEntity.ok(new RestaurantDetailsDTO(this.restaurantService.createRestaurant(restaurantModel, this.userRepository.getReferenceById(principal.getId()))));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<RestaurantDTO> updateRestaurant(@ModelAttribute("currentUser") User user, @PathVariable Long id, @RequestBody Restaurant restaurant) {
+    public ResponseEntity<RestaurantDTO> updateRestaurant(@AuthenticationPrincipal CurrentPrincipal principal, @PathVariable Long id, @RequestBody Restaurant restaurant) {
         if (restaurant.getId() != null && !Objects.equals(restaurant.getId(), id)) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
         Restaurant storedRestaurant = this.restaurantService.getRestaurantWithUser(id);
         if (storedRestaurant == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } else if (!this.resourceGuard.checkOwnership(user, storedRestaurant.getUser().getEmail())) {
+        } else if (!this.resourceGuard.checkOwnership(principal, storedRestaurant.getUser().getEmail())) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
         restaurant.setId(storedRestaurant.getId());
@@ -67,14 +77,14 @@ public class RestaurantController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<HashMap<String, String>> deleteRestaurant(@ModelAttribute("currentUser") User user, @PathVariable Long id) {
+    public ResponseEntity<HashMap<String, String>> deleteRestaurant(@AuthenticationPrincipal CurrentPrincipal principal, @PathVariable Long id) {
         Restaurant storedRestaurant = this.restaurantService.getRestaurantWithUser(id);
         HashMap<String, String> response = new HashMap<>();
         HttpStatus status = HttpStatus.OK;
         if (storedRestaurant == null) {
             status = HttpStatus.NOT_FOUND;
             response.put("message", "Couldn't Find The Given Restaurant.");
-        } else if (!this.resourceGuard.checkOwnership(user, storedRestaurant.getUser().getEmail())) {
+        } else if (!this.resourceGuard.checkOwnership(principal, storedRestaurant.getUser().getEmail())) {
             status = HttpStatus.UNAUTHORIZED;
             response.put("message", "Unauthorized.");
         } else {

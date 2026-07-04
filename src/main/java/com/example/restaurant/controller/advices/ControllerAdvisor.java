@@ -16,7 +16,6 @@ public class ControllerAdvisor {
         this.userRepository = userRepository;
     }
 
-    @ModelAttribute("currentUser")
     public User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {

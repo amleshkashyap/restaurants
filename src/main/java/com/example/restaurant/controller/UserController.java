@@ -3,6 +3,7 @@ package com.example.restaurant.controller;
 import com.example.restaurant.controller.dto.UserDTO;
 import com.example.restaurant.controller.model.LoginModel;
 import com.example.restaurant.controller.model.UserModel;
+import com.example.restaurant.model.CurrentPrincipal;
 import com.example.restaurant.model.User;
 import com.example.restaurant.repository.UserRepository;
 import com.example.restaurant.service.SecurityService;
@@ -14,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
@@ -69,8 +71,8 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserDTO> getUser(@ModelAttribute("currentUser") User currentUser, @PathVariable Long id) {
-        if (!Objects.equals(currentUser.getId(), id) && !currentUser.getRole().getName().equals("ROLE_ADMIN")) {
+    public ResponseEntity<UserDTO> getUser(@AuthenticationPrincipal CurrentPrincipal principal, @PathVariable Long id) {
+        if (!Objects.equals(principal.getId(), id) && !principal.getRole().equals("ROLE_ADMIN")) {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
         User user = this.userRepository.findById(id).orElse(null);
