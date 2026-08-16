@@ -10,6 +10,7 @@ import com.example.restaurant.repository.CouponRepository;
 import com.example.restaurant.repository.RestaurantRepository;
 import com.example.restaurant.repository.UserRepository;
 import com.example.restaurant.service.OrderService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -42,7 +43,10 @@ public class OrderController {
     }
 
     @GetMapping
-    public ResponseEntity<Iterable<OrderDTO>> getOrders(@AuthenticationPrincipal CurrentPrincipal principal, @RequestParam(required = false) Long restaurantId) {
+    public ResponseEntity<Iterable<OrderDTO>> getOrders(
+            @AuthenticationPrincipal CurrentPrincipal principal,
+            @RequestParam(required = false) Long restaurantId
+    ) {
         Iterable<Order> o;
         if (restaurantId != null) {
             o = this.orderService.getRestaurantOrders(restaurantId);
@@ -59,7 +63,10 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<OrderDetailsDTO> getOrder(@AuthenticationPrincipal CurrentPrincipal principal, @PathVariable Long id) {
+    public ResponseEntity<OrderDetailsDTO> getOrder(
+            @AuthenticationPrincipal CurrentPrincipal principal,
+            @PathVariable Long id
+    ) {
         Order order = this.orderService.getOrderWithAllUsers(id);
         if (order == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -73,7 +80,10 @@ public class OrderController {
     }
 
     @PostMapping
-    public ResponseEntity<OrderDetailsDTO> createOrder(@AuthenticationPrincipal CurrentPrincipal principal, @RequestBody OrderModel orderModel) {
+    public ResponseEntity<OrderDetailsDTO> createOrder(
+            @AuthenticationPrincipal CurrentPrincipal principal,
+            @Valid @RequestBody OrderModel orderModel
+    ) {
         Coupon coupon = this.couponRepository.findById(orderModel.getCouponId()).orElse(null);
         Restaurant restaurant = this.restaurantRepository.findById(orderModel.getRestaurantId()).orElse(null);
         if (restaurant == null || principal == null) {
@@ -89,7 +99,11 @@ public class OrderController {
     }
 
     @PatchMapping("/{orderId}")
-    public ResponseEntity<OrderDTO> patchOrder(@AuthenticationPrincipal CurrentPrincipal principal, @PathVariable Long orderId, @RequestParam String status) {
+    public ResponseEntity<OrderDTO> patchOrder(
+            @AuthenticationPrincipal CurrentPrincipal principal,
+            @PathVariable Long orderId,
+            @RequestParam String status
+    ) {
         Order order = this.orderService.getOrderWithAllUsers(orderId);
         status = status.toUpperCase();
         OrderStatusValues curStatus = OrderStatusValues.valueOf(status);

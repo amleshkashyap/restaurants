@@ -8,6 +8,7 @@ import com.example.restaurant.model.Restaurant;
 import com.example.restaurant.model.User;
 import com.example.restaurant.repository.CouponRepository;
 import com.example.restaurant.service.RestaurantService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -42,7 +43,10 @@ public class CouponController {
 
     @GetMapping
     @PreAuthorize("@resourceGuard.checkOwnership(#principal, #restaurant.getUser().getEmail())")
-    public ResponseEntity<Iterable<CouponDTO>> getCouponsForRestaurant(@AuthenticationPrincipal CurrentPrincipal principal, @ModelAttribute("restaurant") Restaurant restaurant) {
+    public ResponseEntity<Iterable<CouponDTO>> getCouponsForRestaurant(
+            @AuthenticationPrincipal CurrentPrincipal principal,
+            @ModelAttribute("restaurant") Restaurant restaurant
+    ) {
         Iterable<Coupon> c = this.couponRepository.findCouponsByRestaurantId(restaurant.getId());
         List<CouponDTO> coupons = new ArrayList<>();
         for (Coupon coupon: c) {
@@ -53,7 +57,12 @@ public class CouponController {
 
     @GetMapping("/{id}")
     @PreAuthorize("@resourceGuard.checkOwnership(#principal, #restaurant.getUser().getEmail())")
-    public ResponseEntity<CouponDTO> getCoupon(@AuthenticationPrincipal CurrentPrincipal principal, @ModelAttribute("restaurant") Restaurant restaurant, @PathVariable Long restaurantId, @PathVariable String id) {
+    public ResponseEntity<CouponDTO> getCoupon(
+            @AuthenticationPrincipal CurrentPrincipal principal,
+            @ModelAttribute("restaurant") Restaurant restaurant,
+            @PathVariable Long restaurantId,
+            @PathVariable String id
+    ) {
         return this.couponRepository.findCoupon(restaurantId, id)
                 .map(CouponDTO::new)
                 .map(ResponseEntity::ok)
@@ -62,7 +71,11 @@ public class CouponController {
 
     @PostMapping
     @PreAuthorize("@resourceGuard.checkOwnership(#principal, #restaurant.getUser().getEmail())")
-    public ResponseEntity<CouponDTO> createCoupon(@AuthenticationPrincipal CurrentPrincipal principal, @ModelAttribute("restaurant") Restaurant restaurant, @RequestBody CouponModel couponModel) {
+    public ResponseEntity<CouponDTO> createCoupon(
+            @AuthenticationPrincipal CurrentPrincipal principal,
+            @ModelAttribute("restaurant") Restaurant restaurant,
+            @Valid @RequestBody CouponModel couponModel
+    ) {
         Coupon coupon = new Coupon(couponModel, restaurant);
         coupon = this.couponRepository.save(coupon);
         return ResponseEntity.ok(new CouponDTO(coupon));
@@ -70,7 +83,13 @@ public class CouponController {
 
     @PutMapping("/{id}")
     @PreAuthorize("@resourceGuard.checkOwnership(#principal, #restaurant.getUser().getEmail())")
-    public ResponseEntity<CouponDTO> updateCoupon(@AuthenticationPrincipal CurrentPrincipal principal, @ModelAttribute("restaurant") Restaurant restaurant, @PathVariable Long restaurantId, @PathVariable String id, @RequestBody Coupon coupon) {
+    public ResponseEntity<CouponDTO> updateCoupon(
+            @AuthenticationPrincipal CurrentPrincipal principal,
+            @ModelAttribute("restaurant") Restaurant restaurant,
+            @PathVariable Long restaurantId,
+            @PathVariable String id,
+            @Valid @RequestBody Coupon coupon
+    ) {
         if (coupon.getId() != null && !Objects.equals(coupon.getId(), id)) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
@@ -86,7 +105,11 @@ public class CouponController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("@resourceGuard.checkOwnership(#principal, #restaurant.getUser().getEmail())")
-    public ResponseEntity<HashMap<String, String>> deleteCoupon(@AuthenticationPrincipal CurrentPrincipal principal, @ModelAttribute("restaurant") Restaurant restaurant, @PathVariable String id) {
+    public ResponseEntity<HashMap<String, String>> deleteCoupon(
+            @AuthenticationPrincipal CurrentPrincipal principal,
+            @ModelAttribute("restaurant") Restaurant restaurant,
+            @PathVariable String id
+    ) {
         Coupon storedCoupon = this.couponRepository.findCoupon(restaurant.getId(), id).orElse(null);
         HashMap<String, String> response = new HashMap<>();
         if (storedCoupon != null) {

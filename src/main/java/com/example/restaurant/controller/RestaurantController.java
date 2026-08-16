@@ -10,6 +10,7 @@ import com.example.restaurant.model.User;
 import com.example.restaurant.repository.RestaurantRepository;
 import com.example.restaurant.repository.UserRepository;
 import com.example.restaurant.service.RestaurantService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -56,12 +57,19 @@ public class RestaurantController {
     }
 
     @PostMapping
-    public ResponseEntity<RestaurantDetailsDTO> createRestaurant(@AuthenticationPrincipal CurrentPrincipal principal, @RequestBody RestaurantModel restaurantModel) {
+    public ResponseEntity<RestaurantDetailsDTO> createRestaurant(
+            @AuthenticationPrincipal CurrentPrincipal principal,
+            @Valid @RequestBody RestaurantModel restaurantModel
+    ) {
         return ResponseEntity.ok(new RestaurantDetailsDTO(this.restaurantService.createRestaurant(restaurantModel, this.userRepository.getReferenceById(principal.getId()))));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<RestaurantDTO> updateRestaurant(@AuthenticationPrincipal CurrentPrincipal principal, @PathVariable Long id, @RequestBody Restaurant restaurant) {
+    public ResponseEntity<RestaurantDTO> updateRestaurant(
+            @AuthenticationPrincipal CurrentPrincipal principal,
+            @PathVariable Long id,
+            @Valid @RequestBody Restaurant restaurant
+    ) {
         if (restaurant.getId() != null && !Objects.equals(restaurant.getId(), id)) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
@@ -77,7 +85,10 @@ public class RestaurantController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<HashMap<String, String>> deleteRestaurant(@AuthenticationPrincipal CurrentPrincipal principal, @PathVariable Long id) {
+    public ResponseEntity<HashMap<String, String>> deleteRestaurant(
+            @AuthenticationPrincipal CurrentPrincipal principal,
+            @PathVariable Long id
+    ) {
         Restaurant storedRestaurant = this.restaurantService.getRestaurantWithUser(id);
         HashMap<String, String> response = new HashMap<>();
         HttpStatus status = HttpStatus.OK;

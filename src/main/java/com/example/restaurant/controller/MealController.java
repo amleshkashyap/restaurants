@@ -7,6 +7,7 @@ import com.example.restaurant.model.Meal;
 import com.example.restaurant.model.Restaurant;
 import com.example.restaurant.repository.MealRepository;
 import com.example.restaurant.service.RestaurantService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -40,7 +41,10 @@ public class MealController {
 
     @GetMapping
     @PreAuthorize("@resourceGuard.checkOwnership(#principal, #restaurant.getUser().getEmail())")
-    public ResponseEntity<Iterable<MealDTO>> getMealsForRestaurant(@AuthenticationPrincipal CurrentPrincipal principal, @ModelAttribute("restaurant") Restaurant restaurant) {
+    public ResponseEntity<Iterable<MealDTO>> getMealsForRestaurant(
+            @AuthenticationPrincipal CurrentPrincipal principal,
+            @ModelAttribute("restaurant") Restaurant restaurant
+    ) {
         Iterable<Meal> m = this.mealRepository.findMealsByRestaurantId(restaurant.getId());
         List<MealDTO> meals = new ArrayList<>();
         for (Meal meal: m) {
@@ -51,7 +55,12 @@ public class MealController {
 
     @GetMapping("/{id}")
     @PreAuthorize("@resourceGuard.checkOwnership(#principal, #restaurant.getUser().getEmail())")
-    public ResponseEntity<MealDTO> getMeal(@AuthenticationPrincipal CurrentPrincipal principal, @ModelAttribute("restaurant") Restaurant restaurant, @PathVariable Long restaurantId, @PathVariable Long id) {
+    public ResponseEntity<MealDTO> getMeal(
+            @AuthenticationPrincipal CurrentPrincipal principal,
+            @ModelAttribute("restaurant") Restaurant restaurant,
+            @PathVariable Long restaurantId,
+            @PathVariable Long id
+    ) {
         return this.mealRepository.findMeal(restaurantId, id)
                 .map(MealDTO::new)
                 .map(ResponseEntity::ok)
@@ -60,7 +69,11 @@ public class MealController {
 
     @PostMapping
     @PreAuthorize("@resourceGuard.checkOwnership(#principal, #restaurant.getUser().getEmail())")
-    public ResponseEntity<MealDTO> createMeal(@AuthenticationPrincipal CurrentPrincipal principal, @ModelAttribute("restaurant") Restaurant restaurant, @RequestBody MealModel mealModel) {
+    public ResponseEntity<MealDTO> createMeal(
+            @AuthenticationPrincipal CurrentPrincipal principal,
+            @ModelAttribute("restaurant") Restaurant restaurant,
+            @Valid @RequestBody MealModel mealModel
+    ) {
         Meal meal = new Meal(mealModel, restaurant);
         meal = this.mealRepository.save(meal);
         return ResponseEntity.ok(new MealDTO(meal));
@@ -68,7 +81,12 @@ public class MealController {
 
     @PutMapping("/{id}")
     @PreAuthorize("@resourceGuard.checkOwnership(#principal, #restaurant.getUser().getEmail())")
-    public ResponseEntity<MealDTO> updateMeal(@AuthenticationPrincipal CurrentPrincipal principal, @ModelAttribute("restaurant") Restaurant restaurant, @PathVariable Long id, @RequestBody Meal meal) {
+    public ResponseEntity<MealDTO> updateMeal(
+            @AuthenticationPrincipal CurrentPrincipal principal,
+            @ModelAttribute("restaurant") Restaurant restaurant,
+            @PathVariable Long id,
+            @Valid @RequestBody Meal meal
+    ) {
         if (meal.getId() != null && !Objects.equals(meal.getId(), id)) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
@@ -84,7 +102,11 @@ public class MealController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("@resourceGuard.checkOwnership(#principal, #restaurant.getUser().getEmail())")
-    public ResponseEntity<HashMap<String, String>> deleteMeal(@AuthenticationPrincipal CurrentPrincipal principal, @ModelAttribute("restaurant") Restaurant restaurant, @PathVariable Long id) {
+    public ResponseEntity<HashMap<String, String>> deleteMeal(
+            @AuthenticationPrincipal CurrentPrincipal principal,
+            @ModelAttribute("restaurant") Restaurant restaurant,
+            @PathVariable Long id
+    ) {
         Meal storedMeal = this.mealRepository.findMeal(restaurant.getId(), id).orElse(null);
         HashMap<String, String> response = new HashMap<>();
         if (storedMeal != null) {

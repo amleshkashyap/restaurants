@@ -71,7 +71,10 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserDTO> getUser(@AuthenticationPrincipal CurrentPrincipal principal, @PathVariable Long id) {
+    public ResponseEntity<UserDTO> getUser(
+            @AuthenticationPrincipal CurrentPrincipal principal,
+            @PathVariable Long id
+    ) {
         if (!Objects.equals(principal.getId(), id) && !principal.getRole().equals("ROLE_ADMIN")) {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
@@ -83,13 +86,18 @@ public class UserController {
     }
 
     @PostMapping()
-    public ResponseEntity<UserDTO> createUser(@RequestBody UserModel userModel) {
+    public ResponseEntity<UserDTO> createUser(
+            @Valid @RequestBody UserModel userModel
+    ) {
         User user = this.userService.createUser(userModel);
         return ResponseEntity.ok(new UserDTO(user));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<UserDTO> updateUser(@PathVariable Long id, @RequestBody UserModel userModel) {
+    public ResponseEntity<UserDTO> updateUser(
+            @PathVariable Long id,
+            @Valid @RequestBody UserModel userModel
+    ) {
         User user = this.userService.updateUser(id, userModel);
         return ResponseEntity.ok(new UserDTO(user));
     }
