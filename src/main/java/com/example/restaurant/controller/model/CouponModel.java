@@ -13,4 +13,10 @@ public class CouponModel {
     private Date expirationDate;
     @NotNull
     private Double discountPercentage;
+
+    public CouponModel(String couponCode, Date expirationDate, Double discountPercentage) {
+        this.couponCode = couponCode;
+        this.expirationDate = expirationDate;
+        this.discountPercentage = discountPercentage;
+    }
 }
