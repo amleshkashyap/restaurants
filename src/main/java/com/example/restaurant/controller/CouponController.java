@@ -90,7 +90,7 @@ public class CouponController {
             @PathVariable String id,
             @Valid @RequestBody Coupon coupon
     ) {
-        if (coupon.getId() != null && !Objects.equals(coupon.getId(), id)) {
+        if (!Objects.equals(coupon.getId(), id)) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
@@ -108,9 +108,10 @@ public class CouponController {
     public ResponseEntity<HashMap<String, String>> deleteCoupon(
             @AuthenticationPrincipal CurrentPrincipal principal,
             @ModelAttribute("restaurant") Restaurant restaurant,
+            @PathVariable Long restaurantId,
             @PathVariable String id
     ) {
-        Coupon storedCoupon = this.couponRepository.findCoupon(restaurant.getId(), id).orElse(null);
+        Coupon storedCoupon = this.couponRepository.findCoupon(restaurantId, id).orElse(null);
         HashMap<String, String> response = new HashMap<>();
         if (storedCoupon != null) {
             this.couponRepository.delete(storedCoupon);

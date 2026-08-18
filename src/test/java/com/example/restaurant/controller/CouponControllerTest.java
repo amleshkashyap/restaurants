@@ -25,6 +25,7 @@ import static org.mockito.Mockito.*;
 
 import java.sql.Date;
 import java.util.Arrays;
+import java.util.Optional;
 
 
 @SpringBootTest
@@ -45,9 +46,18 @@ class CouponControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    private Date dt;
+
     @BeforeEach
     void setUp() {
-
+        dt = new Date(System.currentTimeMillis());
+        User user = mock(User.class);
+        Restaurant restaurant = mock(Restaurant.class);
+        restaurant.setId(1L);
+        restaurant.setUser(user);
+        Mockito.when(resourceGuard.checkOwnership(Mockito.any(), Mockito.any())).thenReturn(true);
+        Mockito.when(restaurant.getUser()).thenReturn(user);
+        Mockito.when(restaurantService.getRestaurantWithUser(1L)).thenReturn(restaurant);
     }
 
     @AfterEach
@@ -58,12 +68,7 @@ class CouponControllerTest {
     void test_GetCouponsForRestaurants() throws Exception {
         Coupon coupon1 = new Coupon.CouponBuilder("1", "Coupon 1", null, 10.0,null).build();
         Coupon coupon2 = new Coupon.CouponBuilder("2", "Coupon 2", null, 5.0, null).build();
-        Restaurant r = mock(Restaurant.class);
-        Mockito.when(resourceGuard.checkOwnership(Mockito.any(), Mockito.any())).thenReturn(true);
-        Mockito.when(r.getUser()).thenReturn(new User());
-        Mockito.when(restaurantService.getRestaurantWithUser(1L)).thenReturn(r);
         Mockito.when(couponRepository.findCouponsByRestaurantId(Mockito.any())).thenReturn(Arrays.asList(coupon1, coupon2));
-
         String expectedJson = """
         [
           {
@@ -87,10 +92,6 @@ class CouponControllerTest {
     @Test
     void test_GetCoupon() throws Exception {
         Coupon coupon = new Coupon.CouponBuilder("1", "Coupon 1", null, 10.0,null).build();
-        Restaurant r = mock(Restaurant.class);
-        Mockito.when(resourceGuard.checkOwnership(Mockito.any(), Mockito.any())).thenReturn(true);
-        Mockito.when(r.getUser()).thenReturn(new User());
-        Mockito.when(restaurantService.getRestaurantWithUser(1L)).thenReturn(r);
         Mockito.when(couponRepository.findCoupon(1L, "1")).thenReturn(java.util.Optional.of(coupon));
 
         String expectedJson = """
@@ -108,17 +109,12 @@ class CouponControllerTest {
 
     @Test
     void test_CreateCoupon() throws Exception {
-        Date dt = new Date(System.currentTimeMillis());
         Coupon coupon = new Coupon.CouponBuilder("1", "Coupon 1", dt, 10.0,null).build();
         CouponModel couponModel = new CouponModel(
                 "Coupon 1",
                 dt,
                 10.0
         );
-        Restaurant r = mock(Restaurant.class);
-        Mockito.when(resourceGuard.checkOwnership(Mockito.any(), Mockito.any())).thenReturn(true);
-        Mockito.when(r.getUser()).thenReturn(new User());
-        Mockito.when(restaurantService.getRestaurantWithUser(1L)).thenReturn(r);
         Mockito.when(couponRepository.save(Mockito.any(Coupon.class))).thenReturn(coupon);
 
         String expectedJson = """
@@ -143,10 +139,6 @@ class CouponControllerTest {
                 null,
                 10.0
         );
-        Restaurant r = mock(Restaurant.class);
-        Mockito.when(resourceGuard.checkOwnership(Mockito.any(), Mockito.any())).thenReturn(true);
-        Mockito.when(r.getUser()).thenReturn(new User());
-        Mockito.when(restaurantService.getRestaurantWithUser(1L)).thenReturn(r);
         mockMvc.perform(post("/api/v1/restaurants/1/coupons")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(couponModel)))
@@ -154,12 +146,59 @@ class CouponControllerTest {
     }
 
     @Test
-    void test_UpdateCoupon() throws Exception {
+    void test_UpdateCoupon_BadId() throws Exception {
+        Coupon coupon = new Coupon.CouponBuilder("2", "Coupon 1", dt, 10.0,null).build();
+        mockMvc.perform(put("/api/v1/restaurants/1/coupons/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(coupon)))
+                .andExpect(status().isBadRequest());
+    }
 
+    @Test
+    void test_UpdateCoupon_NotFound() throws Exception {
+        Coupon coupon = new Coupon.CouponBuilder("1", "Coupon 1", dt, 10.0,null).build();
+        Mockito.when(couponRepository.findCoupon(1L, "1")).thenReturn(Optional.empty());
+        mockMvc.perform(put("/api/v1/restaurants/1/coupons/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(coupon)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void test_UpdateCoupon() throws Exception {
+        Coupon coupon = new Coupon.CouponBuilder("1", "Coupon 1", dt, 10.0,null).build();
+        Mockito.when(couponRepository.findCoupon(1L, "1")).thenReturn(Optional.of(coupon));
+        Mockito.when(couponRepository.save(Mockito.any(Coupon.class))).thenReturn(coupon);
+        mockMvc.perform(put("/api/v1/restaurants/1/coupons/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(coupon)))
+                .andExpect(status().isOk());
     }
 
     @Test
     void test_DeleteCoupon() throws Exception {
+        Coupon coupon = new Coupon.CouponBuilder("1", "Coupon 1", dt, 10.0,null).build();
+        Mockito.when(couponRepository.findCoupon(1L, "1")).thenReturn(Optional.of(coupon));
+        mockMvc.perform(delete("/api/v1/restaurants/1/coupons/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(coupon)))
+                .andExpect(status().isOk());
+    }
 
+    @Test
+    void test_DeleteCoupon_BadRequest() throws Exception {
+        Coupon coupon = new Coupon.CouponBuilder("1", "Coupon 1", dt, 10.0,null).build();
+        Mockito.when(couponRepository.findCoupon(1L, "1")).thenReturn(Optional.empty());
+        mockMvc.perform(delete("/api/v1/restaurants/1/coupons/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(coupon)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void test_NoRestaurant() throws Exception {
+        Mockito.when(restaurantService.getRestaurantWithUser(1L)).thenReturn(null);
+        mockMvc.perform(get("/api/v1/restaurants/1/coupons"))
+                .andExpect(status().isInternalServerError());
     }
 }
