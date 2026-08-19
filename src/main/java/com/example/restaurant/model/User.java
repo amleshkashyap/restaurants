@@ -3,6 +3,7 @@ package com.example.restaurant.model;
 import com.example.restaurant.controller.model.UserModel;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -13,6 +14,7 @@ import java.io.Serializable;
 @Table(name = "users")
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 public class User implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
