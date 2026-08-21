@@ -86,7 +86,7 @@ public class OrderController {
     ) {
         Coupon coupon = this.couponRepository.findById(orderModel.getCouponId()).orElse(null);
         Restaurant restaurant = this.restaurantRepository.findById(orderModel.getRestaurantId()).orElse(null);
-        if (restaurant == null || principal == null) {
+        if (restaurant == null) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
         Order order = this.orderService.createOrder(
